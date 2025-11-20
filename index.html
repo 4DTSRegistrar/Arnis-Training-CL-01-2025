@@ -1,85 +1,117 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Student Verification</title>
+<meta charset="UTF-8">
+<title>Arnis Training CL-01-2025 | Student List</title>
+<style>
+    body {
+        font-family: Arial, sans-serif;
+        background: #f4f4f4;
+        padding: 20px;
+        text-align: center;
+    }
+    #logo {
+        width: 100px;
+        margin-bottom: 10px;
+    }
+    h2 { margin-bottom: 5px; }
+    #table-container {
+        margin-top: 20px;
+        display: flex;
+        justify-content: center;
+    }
+    table {
+        border-collapse: collapse;
+        width: 95%;
+        max-width: 900px;
+        background: white;
+        box-shadow: 0 0 10px #ccc;
+        border-radius: 8px;
+        overflow: hidden;
+    }
+    th, td {
+        padding: 10px;
+        border-bottom: 1px solid #ddd;
+        font-size: 14px;
+    }
+    th {
+        background: #1a73e8;
+        color: white;
+    }
+    tr:hover { background: #f1f1f1; }
+    #pdf-btn {
+        margin-top: 15px;
+        padding: 10px 20px;
+        background: #1a73e8;
+        color: white;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+    }
+    #pdf-btn:hover { background: #0c56c2; }
+</style>
 </head>
 <body>
-<h1>Arnis Training CL-01-2025</h1>
-<p>Scan your QR Code below. Certificate will open automatically.</p>
 
+<img id="logo" src="assets/logo.png" alt="Unit Logo">
 
-<!-- QR SCANNER -->
-<video id="preview" width="300"></video>
+<h2>Arnis Training CL-01-2025</h2>
+<p>Official List of Students</p>
 
+<button id="pdf-btn" onclick="openPDF()">OPEN CERTIFICATE PDF</button>
 
-<h2>List of Students</h2>
-<ul id="studentList">Loading...</ul>
+<div id="table-container">
+    <table id="student-table">
+        <thead>
+            <tr>
+                <th>CERT ID</th>
+                <th>NAME</th>
+                <th>COURSE</th>
+                <th>DATE</th>
+            </tr>
+        </thead>
+        <tbody id="table-body">
+            <tr><td colspan="4">Loading list...</td></tr>
+        </tbody>
+    </table>
+</div>
 
-
-<h3><a href="Certificates/certificates.pdf" target="_blank">View All Certificates (PDF)</a></h3>
-
-
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jsqr/1.4.0/jsQR.min.js"></script>
 <script>
-// Load list of students
-fetch('students.csv')
-.then(res => res.text())
-.then(data => {
-const lines = data.trim().split("
-").slice(1);
-const ul = document.getElementById('studentList');
-ul.innerHTML = '';
+async function loadStudents() {
+    const tbody = document.getElementById("table-body");
 
+    try {
+        const response = await fetch("students.csv");
+        const text = await response.text();
+        const lines = text.split("\n").filter(line => line.trim() !== "");
 
-lines.forEach(row => {
-const cols = row.split(',');
-const li = document.createElement('li');
-li.textContent = cols[1];
-ul.appendChild(li);
-});
-});
+        tbody.innerHTML = "";
 
+        for (let i = 1; i < lines.length; i++) {
+            const cols = lines[i].split(",");
+            if (cols.length < 4) continue;
 
-// QR Scanner
-const video = document.getElementById('preview');
+            let row = document.createElement("tr");
+            row.innerHTML = `
+                <td>${cols[0].trim()}</td>
+                <td>${cols[1].trim()}</td>
+                <td>${cols[2].trim()}</td>
+                <td>${cols[3].trim()}</td>
+            `;
+            tbody.appendChild(row);
+        }
 
-
-navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } })
-.then(stream => {
-video.srcObject = stream;
-video.setAttribute("playsinline", true);
-video.play();
-scanQR();
-});
-
-
-function scanQR() {
-const canvas = document.createElement('canvas');
-const context = canvas.getContext('2d');
-
-
-function tick() {
-if (video.readyState === video.HAVE_ENOUGH_DATA) {
-canvas.height = video.videoHeight;
-canvas.width = video.videoWidth;
-context.drawImage(video, 0, 0, canvas.width, canvas.height);
-
-
-const imageData = context.getImageData(0, 0, canvas.width, canvas.height);
-const code = jsQR(imageData.data, canvas.width, canvas.height, { inversionAttempts: "dontInvert" });
-
-
-if (code) {
-window.location.href = code.data;
-return;
+    } catch (error) {
+        tbody.innerHTML = "<tr><td colspan='4' style='color:red;'>Error loading students.csv</td></tr>";
+    }
 }
+
+function openPDF() {
+    window.open("Certificates/certificates.pdf", "_blank");
 }
-requestAnimationFrame(tick);
-}
-tick();
-}
+
+window.onload = loadStudents;
 </script>
+
 </body>
 </html>
