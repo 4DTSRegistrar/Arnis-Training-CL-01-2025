@@ -27,7 +27,8 @@
 fetch('students.csv')
 .then(res => res.text())
 .then(data => {
-const lines = data.trim().split("\n").slice(1);
+const lines = data.trim().split("
+").slice(1);
 const ul = document.getElementById('studentList');
 ul.innerHTML = '';
 
@@ -62,4 +63,23 @@ const context = canvas.getContext('2d');
 function tick() {
 if (video.readyState === video.HAVE_ENOUGH_DATA) {
 canvas.height = video.videoHeight;
+canvas.width = video.videoWidth;
+context.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+
+const imageData = context.getImageData(0, 0, canvas.width, canvas.height);
+const code = jsQR(imageData.data, canvas.width, canvas.height, { inversionAttempts: "dontInvert" });
+
+
+if (code) {
+window.location.href = code.data;
+return;
+}
+}
+requestAnimationFrame(tick);
+}
+tick();
+}
+</script>
+</body>
 </html>
