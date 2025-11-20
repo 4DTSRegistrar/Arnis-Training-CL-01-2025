@@ -1,61 +1,85 @@
-<!-- verify.html -->
-<!-- ========================= -->
-<!-- Save this as verify.html -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Certificate Verification</title>
+<title>Student Verification</title>
 </head>
 <body>
-<h1>Certificate Verification</h1>
-<div id="result">Loading...</div>
+<h1>Arnis Training CL-01-2025</h1>
+<p>Scan your QR Code below. Certificate will open automatically.</p>
 
 
+<!-- QR SCANNER -->
+<video id="preview" width="300"></video>
+
+
+<h2>List of Students</h2>
+<ul id="studentList">Loading...</ul>
+
+
+<h3><a href="Certificates/certificates.pdf" target="_blank">View All Certificates (PDF)</a></h3>
+
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jsqr/1.4.0/jsQR.min.js"></script>
 <script>
-async function loadCSV() {
-const response = await fetch('students.csv');
-const data = await response.text();
-return data.split("
-").slice(1).map(row => {
+// Load list of students
+fetch('students.csv')
+.then(res => res.text())
+.then(data => {
+const lines = data.trim().split("
+").slice(1);
+const ul = document.getElementById('studentList');
+ul.innerHTML = '';
+
+
+lines.forEach(row => {
 const cols = row.split(',');
-return {
-CERT_ID: cols[0]?.trim(),
-NAME: cols[1]?.trim(),
-COURSE: cols[2]?.trim(),
-DATE: cols[3]?.trim()
-};
+const li = document.createElement('li');
+li.textContent = cols[1];
+ul.appendChild(li);
 });
-}
+});
 
 
-async function verify() {
-const urlParams = new URLSearchParams(window.location.search);
-const id = urlParams.get('id');
-const list = await loadCSV();
-const student = list.find(s => s.CCERT_ID === id);
+// QR Scanner
+const video = document.getElementById('preview');
 
 
-if (!student) {
-document.getElementById('result').innerHTML = `<p>Record not found.</p>`;
+navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } })
+.then(stream => {
+video.srcObject = stream;
+video.setAttribute("playsinline", true);
+video.play();
+scanQR();
+});
+
+
+function scanQR() {
+const canvas = document.createElement('canvas');
+const context = canvas.getContext('2d');
+
+
+function tick() {
+if (video.readyState === video.HAVE_ENOUGH_DATA) {
+canvas.height = video.videoHeight;
+canvas.width = video.videoWidth;
+context.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+
+const imageData = context.getImageData(0, 0, canvas.width, canvas.height);
+const code = jsQR(imageData.data, canvas.width, canvas.height, { inversionAttempts: "dontInvert" });
+
+
+if (code) {
+window.location.href = code.data;
 return;
 }
-
-
-document.getElementById('result').innerHTML = `
-<p><strong>Name:</strong> ${student.NAME}</p>
-<p><strong>Course:</strong> ${student.COURSE}</p>
-<p><strong>Date:</strong> ${student.DATE}</p>
-
-
-<h3>Certificate:</h3>
-<iframe src="Certificates/certificates.pdf" width="100%" height="600px"></iframe>
-`;
 }
-
-
-verify();
+requestAnimationFrame(tick);
+}
+tick();
+}
 </script>
 </body>
 </html>
