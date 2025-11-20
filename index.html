@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Student Verification</title>
+</head>
+<body>
+<h1>Arnis Training CL-01-2025</h1>
+<p>Scan your QR Code below or enter your CERT ID:</p>
+
+
+<!-- QR SCANNER -->
+<video id="preview" width="300"></video>
+
+
+<input id="certInput" type="text" placeholder="Enter CERT ID" />
+<button onclick="verify()">Verify</button>
+
+
+<h3><a href="Certificates/certificates.pdf" target="_blank">View All Certificates (PDF)</a></h3>
+<h3><a href="students_list.html" target="_blank">View Student Names</a></h3>
+
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jsqr/1.4.0/jsQR.min.js"></script>
+<script>
+function verify() {
+const id = document.getElementById('certInput').value.trim();
+if (!id) return alert('Please input CERT ID');
+window.location.href = `verify.html?id=${id}`;
+}
+
+
+const video = document.getElementById('preview');
+
+
+navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } })
+.then(stream => {
+video.srcObject = stream;
+video.setAttribute("playsinline", true);
+video.play();
+scanQR();
+});
+
+
+function scanQR() {
+const canvas = document.createElement('canvas');
+const context = canvas.getContext('2d');
+
+
+function tick() {
+if (video.readyState === video.HAVE_ENOUGH_DATA) {
+canvas.height = video.videoHeight;
+canvas.width = video.videoWidth;
+context.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+
+const imageData = context.getImageData(0, 0, canvas.width, canvas.height);
+const code = jsQR(imageData.data, canvas.width, canvas.height, { inversionAttempts: "dontInvert" });
+
+
+if (code) {
+window.location.href = code.data;
+return;
+}
+}
+requestAnimationFrame(tick);
+}
+tick();
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,61 @@
+<!-- verify.html -->
+<!-- ========================= -->
+<!-- Save this as verify.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Certificate Verification</title>
+</head>
+<body>
+<h1>Certificate Verification</h1>
+<div id="result">Loading...</div>
+
+
+<script>
+async function loadCSV() {
+const response = await fetch('students.csv');
+const data = await response.text();
+return data.split("
+").slice(1).map(row => {
+const cols = row.split(',');
+return {
+CERT_ID: cols[0]?.trim(),
+NAME: cols[1]?.trim(),
+COURSE: cols[2]?.trim(),
+DATE: cols[3]?.trim()
+};
+});
+}
+
+
+async function verify() {
+const urlParams = new URLSearchParams(window.location.search);
+const id = urlParams.get('id');
+const list = await loadCSV();
+const student = list.find(s => s.CCERT_ID === id);
+
+
+if (!student) {
+document.getElementById('result').innerHTML = `<p>Record not found.</p>`;
+return;
+}
+
+
+document.getElementById('result').innerHTML = `
+<p><strong>Name:</strong> ${student.NAME}</p>
+<p><strong>Course:</strong> ${student.COURSE}</p>
+<p><strong>Date:</strong> ${student.DATE}</p>
+
+
+<h3>Certificate:</h3>
+<iframe src="Certificates/certificates.pdf" width="100%" height="600px"></iframe>
+`;
+}
+
+
+verify();
+</script>
+</body>
+</html>
